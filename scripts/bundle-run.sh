@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BUILDROOT_IMG="registry.cn-beijing.aliyuncs.com/yunionio/buildroot:2021.08.2-0"
+BUILDROOT_IMG="hub.wanjiedata.com/cloudpods/buildroot:2021.08.2-0"
 
 TARGET_ARCH=${TARGET_ARCH:-x86_64}
 

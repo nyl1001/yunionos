@@ -1,5 +1,5 @@
 BUILD_IMG = "yunionos-build-env:latest"
-REGISTRY = "registry.cn-beijing.aliyuncs.com/yunionio"
+REGISTRY = "hub.wanjiedata.com/cloudpods"
 BUILD_ROOT_VERSION = "2021.08.2"
 BUILD_ROOT_IMG = $(REGISTRY)/buildroot:$(BUILD_ROOT_VERSION)-0
 
@@ -88,7 +88,7 @@ docker-make-rpm:
 	docker run --rm \
 		--name docker-centos-build-baremetal \
 		-v $(CURDIR):/data \
-		registry.cn-beijing.aliyuncs.com/yunionio/centos-build:1.1-4 \
+		hub.wanjiedata.com/cloudpods/centos-build:1.1-4 \
 		/bin/bash -c "make -C /data make-rpm"
 
 YUNIONOS_VERSION = "v0.1.9-20231129.0"

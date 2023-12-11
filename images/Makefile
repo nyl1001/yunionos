@@ -1,5 +1,5 @@
 BUILD_IMG = "yunionos-build-env:latest"
-REGISTRY = "registry.cn-beijing.aliyuncs.com/yunionio"
+REGISTRY = "hub.wanjiedata.com/cloudpods"
 
 BUILD_ROOT_OUTPUT_DIR = $(CURDIR)/../output
 BUILD_ROOT_OUTPUT_DIR_ARM64 = $(CURDIR)/../output_arm64

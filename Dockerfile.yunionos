@@ -1,4 +1,4 @@
-FROM registry.cn-beijing.aliyuncs.com/yunionio/onecloud-base:v0.3.5
+FROM hub.wanjiedata.com/cloudpods/onecloud-base:v3.15.4-0
 
 RUN mkdir -p /yunionos/x86_64 && mkdir -p /yunionos/aarch64
 
