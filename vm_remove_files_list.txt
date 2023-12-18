@@ -1,0 +1,10 @@
+usr/share/qemu
+usr/bin/qemu-system-*
+opt/MegaRAID
+opt/adaptec
+opt/hp
+opt/lsi
+opt/mvcli
+opt/nvme-cli
+lib/firmware
+lib/libmvraid.so

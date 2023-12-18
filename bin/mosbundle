@@ -20,7 +20,7 @@ Usage: ${0##*/} [-e EXTRA_MODULES_DIR] rootfs.tar kpkg.deb output_dir [iso|pxe] 
    [re]Bundle a buildroot rootfs into a mini-cloud image
 
    Example:
-    ${0##*/} [-e EXTRA_MODULES_DIR] rootfs.tar linux-image-*-virtuaal*.deb build-output/ [iso|pxe] [-f firmware_pkg] [-a]
+    ${0##*/} [-e EXTRA_MODULES_DIR] [-f firmware_pkg] [-a] [-r REMOVE_FILES_LIST_FILE] rootfs.tar linux-image-*-virtuaal*.deb build-output/ [iso|pxe]
 EOF
 }
 bad_Usage() { Usage 1>&2; fail "$@"; }
@@ -32,7 +32,7 @@ xrsync() {
 	rsync --archive --xattrs --hard-links --acls --sparse "$@"
 }
 
-short_opts="hvae:f:"
+short_opts="hvae:f:r:m:"
 long_opts="initrd-busybox:,help,verbose,all"
 getopt_out=$(getopt --name "${0##*/}" \
 	--options "${short_opts}" --long "${long_opts}" -- "$@") &&
@@ -51,6 +51,8 @@ while [ $# -ne 0 ]; do
 		-a|--all) all_modules=1;;
 		-e) extra_modules_in="$next";;
 		-f) firmware_in="$next";;
+		-r) remove_list_file="$next";;
+		-m) modfile="$next";;
 		--) shift; break;;
 	esac
 	shift;
@@ -58,7 +60,11 @@ done
 
 if [ -n "$extra_modules_in" ]; then
   extra_modules_dir=$(readlink -f "$extra_modules_in")
-  [ -d "$extra_modules_dir"  ] || bad_Usage "Extra modules dir: '$extra_modules_dir' not exists"
+  [ -d "$extra_modules_dir" ] || bad_Usage "Extra modules dir: '$extra_modules_dir' not exists"
+fi
+
+if [ -n "$remove_list_file" ]; then
+	[ -f "$remove_list_file" ]  || bad_Usage "Remove file list file: '$remove_list_file' doesn't exists"
 fi
 
 [ $# -ge 3 ] || bad_Usage "must give rootfs.tar, kernel pkg, out_dir, src_type{pxe|iso}"
@@ -85,6 +91,12 @@ fi
 src_symlinks="${topdir}/symlinks.list"
 makedevs_list="${topdir}/makedevs.list"
 fixup_fs="${topdir}/fixup-fs"
+
+if [ -n "$modfile" ]; then
+	[ -f "$modfile" ]  || bad_Usage "Module file: '$modfile' doesn't exists"
+else
+	modfile="$src_dir/etc/modules"
+fi
 
 [ "$(id -u)" = "0" ] || fail "sorry... must be root"
 
@@ -125,9 +137,8 @@ stage_d="$TEMP_D/staging"
 kernel_tar="$inter_d/kernel.tar"
 overlay_tar="$inter_d/overlay.tar"
 
-modfile="$src_dir/etc/modules"
 if [ -f "$modfile" ]; then
-	MODULES=$(sed 's,#.*,,' "$src_dir/etc/modules") ||
+	MODULES=$(sed 's,#.*,,' "$modfile") ||
 		fail "failed to read modules"
 else
 	MODULES=${DEF_MODULES}
@@ -296,6 +307,18 @@ xrsync "$stage_d/" "$initramfs_d" ||
 	fail "failed to copy to initramfs_d"
 rm -Rf "$initramfs_d/vmlinuz" "$initramfs_d/boot" ||
 	fail "failed to remove files in initramfs staging dir"
+
+# remove needless qemu dir which occupies 220M space
+if [ -f "$remove_list_file" ]; then
+	for dir in $(cat "$remove_list_file"); do
+		echo "RUN: rm -Rf "$initramfs_d/$dir""
+		rm -Rf $initramfs_d/$dir || fail "failed to remove $initramfs_d/$dir"
+	done
+fi
+
+# copy modfile to $initramfs_d/etc/modules
+echo "RUN: cp $modfile to $initramfs_d/etc/modules"
+cp $modfile $initramfs_d/etc/modules
 
 ( cd "$initramfs_d" && find . | cpio --quiet -o -H newc |
     gzip -9 ) > "$initramfs"
